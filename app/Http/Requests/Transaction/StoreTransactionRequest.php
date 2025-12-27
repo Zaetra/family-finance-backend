@@ -14,6 +14,7 @@ class StoreTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'account_id' => 'required|exists:accounts,id',
             'amount' => 'required|numeric',
             'type' => 'required|string|in:income,expense',
             'category' => 'required|string',
