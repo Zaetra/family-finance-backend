@@ -52,4 +52,19 @@ class FamilyGroupService
     {
         $familyGroup->delete();
     }
+
+    /**
+     * Add a member to the family group by email.
+     */
+    public function addMember(FamilyGroup $familyGroup, string $email)
+    {
+        $user = User::where('email', $email)->first();
+        
+        if (!$user) {
+            return null;
+        }
+
+        $user->update(['family_group_id' => $familyGroup->id]);
+        return $user;
+    }
 }

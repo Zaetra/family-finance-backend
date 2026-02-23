@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Account;
+use App\Models\PendingTransaction;
+use App\Models\TransactionShare;
 use Illuminate\Support\Facades\DB;
 
 class TransactionService
@@ -14,7 +16,7 @@ class TransactionService
      */
     public function getTransactionsForUser(User $user)
     {
-        $query = Transaction::with('account');
+        $query = Transaction::with(['account', 'shares', 'pendingTransaction']);
         
         if ($user->family_group_id) {
             $query->where(function($q) use ($user) {
@@ -49,6 +51,28 @@ class TransactionService
                         $account->balance -= $data['amount'];
                     }
                     $account->save();
+                }
+            }
+
+            // Handle Transaction Shares (Splits)
+            if (isset($data['shares']) && is_array($data['shares'])) {
+                foreach ($data['shares'] as $shareData) {
+                    TransactionShare::create([
+                        'transaction_id' => $transaction->id,
+                        'user_id' => $shareData['user_id'],
+                        'amount' => $shareData['amount'],
+                    ]);
+                }
+            }
+
+            // Handle Payment of Pending Transaction (Assignment)
+            if (isset($data['pending_transaction_id'])) {
+                $pendingTransaction = PendingTransaction::find($data['pending_transaction_id']);
+                if ($pendingTransaction) {
+                    $pendingTransaction->update([
+                        'status' => 'PAID',
+                        'transaction_id' => $transaction->id
+                    ]);
                 }
             }
 

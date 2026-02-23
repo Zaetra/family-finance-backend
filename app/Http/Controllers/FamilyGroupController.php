@@ -8,6 +8,8 @@ use App\Models\FamilyGroup;
 use App\Services\FamilyGroupService;
 use Illuminate\Http\Request;
 
+use App\Http\Requests\FamilyGroup\AddMemberRequest;
+
 class FamilyGroupController extends Controller
 {
     protected $familyService;
@@ -51,5 +53,23 @@ class FamilyGroupController extends Controller
     {
         $this->familyService->deleteFamilyGroup($familyGroup);
         return $this->successResponse(null, 'Grupo familiar eliminado', 204);
+    }
+
+    public function addMember(AddMemberRequest $request)
+    {
+        $user = $request->user();
+        if (!$user->family_group_id) {
+             return $this->errorResponse('No perteneces a un grupo familiar', 400);
+        }
+
+        $familyGroup = $this->familyService->getFamilyGroupForUser($user);
+        
+        $newMember = $this->familyService->addMember($familyGroup, $request->email);
+
+        if (!$newMember) {
+             return $this->errorResponse('Usuario no encontrado', 404);
+        }
+
+        return $this->successResponse($newMember, 'Miembro agregado correctamente');
     }
 }

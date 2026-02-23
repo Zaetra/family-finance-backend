@@ -8,6 +8,7 @@ use App\Http\Controllers\FamilyGroupController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PendingTransactionController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -19,8 +20,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
     Route::apiResource('family-groups', FamilyGroupController::class);
+    Route::post('/family-groups/members', [FamilyGroupController::class, 'addMember']);
     Route::apiResource('transactions', TransactionController::class);
     Route::apiResource('accounts', AccountController::class);
+    Route::apiResource('pending-transactions', PendingTransactionController::class);
 
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
 });
