@@ -29,7 +29,16 @@ class DashboardController extends Controller
             ->whereBetween('transaction_date', [$startOfWeek, $endOfWeek])
             ->sum('amount');
 
-        // 3. Recent Transactions (Last 5)
+        // 3. Gastos Mensuales (Sum of expense transactions in current month)
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+
+        $monthlyExpenses = Transaction::where('user_id', $user->id)
+            ->where('type', 'expense')
+            ->whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
+
+        // 4. Recent Transactions (Last 5)
         $recentTransactions = Transaction::with('account')
             ->where('user_id', $user->id)
             ->orderBy('transaction_date', 'desc')
@@ -39,6 +48,7 @@ class DashboardController extends Controller
         return $this->successResponse([
             'total_balance' => $totalBalance,
             'weekly_expenses' => $weeklyExpenses,
+            'gastos_mensuales' => $monthlyExpenses,
             'recent_transactions' => $recentTransactions
         ], 'Dashboard summary retrieved successfully');
     }
