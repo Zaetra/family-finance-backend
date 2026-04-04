@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -17,10 +16,8 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // 1. Total Balance (Sum of all user accounts)
         $totalBalance = Account::where('user_id', $user->id)->sum('balance');
 
-        // 2. Weekly Expenses (Sum of expense transactions in current week)
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek = Carbon::now()->endOfWeek();
 
@@ -29,7 +26,6 @@ class DashboardController extends Controller
             ->whereBetween('transaction_date', [$startOfWeek, $endOfWeek])
             ->sum('amount');
 
-        // 3. Gastos Mensuales (Sum of expense transactions in current month)
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
 
@@ -38,7 +34,6 @@ class DashboardController extends Controller
             ->whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
             ->sum('amount');
 
-        // 4. Recent Transactions (Last 5)
         $recentTransactions = Transaction::with('account')
             ->where('user_id', $user->id)
             ->orderBy('transaction_date', 'desc')
@@ -49,7 +44,7 @@ class DashboardController extends Controller
             'total_balance' => $totalBalance,
             'weekly_expenses' => $weeklyExpenses,
             'gastos_mensuales' => $monthlyExpenses,
-            'recent_transactions' => $recentTransactions
+            'recent_transactions' => $recentTransactions,
         ], 'Dashboard summary retrieved successfully');
     }
 }

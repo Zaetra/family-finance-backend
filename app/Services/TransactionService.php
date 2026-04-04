@@ -2,26 +2,23 @@
 
 namespace App\Services;
 
-use App\Models\Transaction;
-use App\Models\User;
 use App\Models\Account;
 use App\Models\PendingTransaction;
+use App\Models\Transaction;
 use App\Models\TransactionShare;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class TransactionService
 {
-    /**
-     * Get transactions for a user (personal and family).
-     */
     public function getTransactionsForUser(User $user)
     {
         $query = Transaction::with(['account', 'shares', 'pendingTransaction']);
-        
+
         if ($user->family_group_id) {
-            $query->where(function($q) use ($user) {
+            $query->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
-                  ->orWhere('family_group_id', $user->family_group_id);
+                    ->orWhere('family_group_id', $user->family_group_id);
             });
         } else {
             $query->where('user_id', $user->id);
@@ -30,9 +27,6 @@ class TransactionService
         return $query->orderBy('transaction_date', 'desc')->get();
     }
 
-    /**
-     * Create a new transaction and update account balance.
-     */
     public function createTransaction(User $user, array $data)
     {
         return DB::transaction(function () use ($user, $data) {
@@ -41,7 +35,6 @@ class TransactionService
 
             $transaction = Transaction::create($data);
 
-            // Update Account Balance
             if (isset($data['account_id'])) {
                 $account = Account::find($data['account_id']);
                 if ($account) {
@@ -54,7 +47,6 @@ class TransactionService
                 }
             }
 
-            // Handle Transaction Shares (Splits)
             if (isset($data['shares']) && is_array($data['shares'])) {
                 foreach ($data['shares'] as $shareData) {
                     TransactionShare::create([
@@ -65,13 +57,12 @@ class TransactionService
                 }
             }
 
-            // Handle Payment of Pending Transaction (Assignment)
             if (isset($data['pending_transaction_id'])) {
                 $pendingTransaction = PendingTransaction::find($data['pending_transaction_id']);
                 if ($pendingTransaction) {
                     $pendingTransaction->update([
                         'status' => 'PAID',
-                        'transaction_id' => $transaction->id
+                        'transaction_id' => $transaction->id,
                     ]);
                 }
             }
@@ -80,24 +71,16 @@ class TransactionService
         });
     }
 
-    /**
-     * Update a transaction.
-     * Note: Does NOT currently adjust balance for edits to avoid complexity unless requested.
-     */
     public function updateTransaction(Transaction $transaction, array $data)
     {
-        // TODO: Handle balance adjustments on update if amount/type/account changes.
         $transaction->update($data);
+
         return $transaction;
     }
 
-    /**
-     * Delete a transaction and revert account balance.
-     */
     public function deleteTransaction(Transaction $transaction)
     {
         DB::transaction(function () use ($transaction) {
-            // Revert Account Balance
             if ($transaction->account_id) {
                 $account = Account::find($transaction->account_id);
                 if ($account) {

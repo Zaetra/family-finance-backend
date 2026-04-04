@@ -17,5 +17,4 @@ class FamilyGroup extends Model
     {
         return $this->hasMany(Transaction::class);
     }
-    //
 }
