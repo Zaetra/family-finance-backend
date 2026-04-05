@@ -37,8 +37,10 @@ RUN php artisan key:generate && \
     php artisan storage:link && \
     php artisan view:cache
 
+# ELIMINAR CACHE DE CONFIGURACIÓN PARA LEER ENV VARS EN TIEMPO DE EJECUCIÓN
+RUN rm -f bootstrap/cache/config.php
+
 EXPOSE 8000
 
-CMD php artisan config:clear && \
-    php artisan migrate --force && \
+CMD php artisan migrate --force && \
     php artisan serve --host=0.0.0.0 --port=8000
