@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip xml
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip xml fileinfo
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -24,9 +24,14 @@ COPY . .
 RUN cp .env.example .env
 
 # Asegurar permisos de escritura para storage y cache
+RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache
 RUN chmod -R 777 storage bootstrap/cache
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Instalar dependencias sin scripts (los scripts fallan sin APP_KEY)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Ahora que las dependencias están instaladas, ejecutar scripts manualmente
+RUN php artisan package:discover --ansi
 
 RUN php artisan key:generate && \
     php artisan storage:link && \
