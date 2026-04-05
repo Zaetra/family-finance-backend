@@ -42,7 +42,9 @@ RUN rm -f bootstrap/cache/config.php
 
 EXPOSE 8000
 
-CMD php artisan config:clear && \
+# Eliminar .env del build para forzar uso de variables de entorno del sistema (Render)
+CMD rm -f .env && \
+    php artisan config:clear && \
     php artisan route:clear && \
     php artisan view:clear && \
     php artisan cache:clear && \
